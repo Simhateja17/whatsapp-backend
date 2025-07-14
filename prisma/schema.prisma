@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  username      String          @unique // We'll get this from the sign-in form
+  email         String          @unique // Add email field
+  profilePicUrl String?
+  otp           String?         // To store the one-time password
+  otpExpiresAt  DateTime?       // To set an expiration for the OTP
+  lastSeen      DateTime?       // Track when user was last active
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  conversations Conversation[]  @relation("UserConversations")
+  messages      Message[]
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  members   User[]    @relation("UserConversations")
+  messages  Message[]
+}
+
+model Message {
+  id              String        @id @default(cuid())
+  content         String        // This will be the AES encrypted message
+  createdAt       DateTime      @default(now())
+  author          User          @relation(fields: [authorId], references: [id])
+  authorId        String
+  conversation    Conversation  @relation(fields: [conversationId], references: [id])
+  conversationId  String
+}
